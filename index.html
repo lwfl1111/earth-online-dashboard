@@ -65,10 +65,32 @@
     </div>
   </div>
 
+  <!-- 管理面板：隐藏在底部，点击齿轮或长按可显示（这里先做一个简单的显示按钮） -->
+  <div class="max-w-md mx-auto mt-4 px-4 pb-12">
+    <button onclick="toggleAdmin()" class="text-slate-600 text-xs hover:text-slate-400 transition-colors flex items-center gap-1">
+      ⚙️ 管理面板
+    </button>
+    
+    <div id="admin-panel" class="hidden mt-4 p-4 bg-slate-800 rounded-lg border border-slate-700 shadow-xl">
+      <h3 class="text-sm font-bold text-slate-300 mb-3">更新金币 (CNY)</h3>
+      <div class="flex gap-2 mb-3">
+        <input type="number" id="gold-input" placeholder="输入金额" class="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-1 text-sm focus:outline-none focus:border-yellow-500">
+        <button onclick="addGold()" class="bg-yellow-600 hover:bg-yellow-500 px-4 py-1 rounded text-sm font-bold transition-colors">确认</button>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="quickAdd(100)" class="flex-1 bg-slate-700 hover:bg-slate-600 py-1 rounded text-xs">+100</button>
+        <button onclick="quickAdd(500)" class="flex-1 bg-slate-700 hover:bg-slate-600 py-1 rounded text-xs">+500</button>
+        <button onclick="quickAdd(1000)" class="flex-1 bg-slate-700 hover:bg-slate-600 py-1 rounded text-xs">+1000</button>
+      </div>
+      <p id="sync-status" class="text-[10px] text-slate-500 mt-2 italic text-center">状态：就绪</p>
+    </div>
+  </div>
+
   <script>
-    // 建议的优化：抽离存款数字
+    // 基础配置
     const goal = 15000;
-    let gold = 7000;
+    // 从本地存储加载，如果没有则默认 7000
+    let gold = parseInt(localStorage.getItem('gold')) || 7000;
 
     // 更新界面
     function updateDashboard() {
@@ -81,6 +103,58 @@
       // 计算并更新进度条长度
       const percentage = Math.min((gold / goal) * 100, 100);
       goldProgress.style.width = `${percentage}%`;
+      
+      // 保存到本地存储，防止刷新丢失
+      localStorage.setItem('gold', gold);
+      
+      // 同步到 ESP32 (预留接口)
+      syncToESP32(gold);
+    }
+
+    // 显示/隐藏管理面板
+    function toggleAdmin() {
+      const panel = document.getElementById('admin-panel');
+      panel.classList.toggle('hidden');
+    }
+
+    // 手动增加金币
+    function addGold() {
+      const input = document.getElementById('gold-input');
+      const value = parseInt(input.value);
+      if (!isNaN(value)) {
+        gold += value;
+        input.value = '';
+        updateDashboard();
+      }
+    }
+
+    // 快捷增加
+    function quickAdd(amount) {
+      gold += amount;
+      updateDashboard();
+    }
+
+    // ESP32 同步逻辑 (这是一个占位示例)
+    async function syncToESP32(newGold) {
+      const status = document.getElementById('sync-status');
+      status.innerText = '状态：正在同步到 ESP32...';
+      
+      try {
+        // 如果你有一个 ESP32 的 API 地址，可以取消下面注释：
+        /*
+        await fetch('http://<ESP32_IP>/update?gold=' + newGold, {
+          method: 'GET',
+          mode: 'no-cors'
+        });
+        */
+        
+        // 模拟同步成功
+        setTimeout(() => {
+          status.innerText = '状态：已同步到 ESP32';
+        }, 800);
+      } catch (err) {
+        status.innerText = '状态：同步失败 (检查连接)';
+      }
     }
 
     // 初始化显示
